@@ -28,4 +28,6 @@
 * ~The frame for deployment~
 * Model applied and tested -> until complete
 * framework for deployment Referencing, combining
+* Framework for connection with apps
+* Complete the full code prototype
 * Tested, modified, and finally completed
