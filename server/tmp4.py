@@ -78,7 +78,6 @@ async def detect(file: UploadFile = File(...)):
 async def get_results():
     """
     지금까지 업로드된 모든 탐지 결과 반환
-    memory_storage에 저장된 데이터를 리스트로 돌려줌
     """
     return JSONResponse(content={
         "status": "success",
