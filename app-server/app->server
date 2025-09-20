@@ -1,0 +1,49 @@
+앱 -> 서버 사진전송
+
+import okhttp3.*;
+import java.io.File;
+import java.io.IOException;
+
+public class UploadImage {
+    private static final String SERVER_URL = "http://주소/detect";
+
+    public static void uploadImage(File imageFile) {
+        OkHttpClient client = new OkHttpClient();
+
+        // 파일을 Multipart로 감싸서 업로드
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                        "file",
+                        imageFile.getName(),
+                        RequestBody.create(imageFile, MediaType.parse("image/*"))
+                )
+                .build();
+
+        Request request = new Request.Builder()
+                .url(SERVER_URL)
+                .post(requestBody)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+                System.out.println("업로드 실패: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    throw new IOException("서버 응답 실패: " + response);
+                }
+                String responseData = response.body().string();
+                System.out.println("서버 응답: " + responseData);
+            }
+        });
+    }
+}
+
+사용법
+File imgFile = new File("/storage/emulated/0/DCIM/Camera/test.jpg");
+UploadImage.uploadImage(imgFile);
