@@ -5,7 +5,7 @@ import okhttp3.*;
 import java.io.IOException;
 
 public class FetchResults {
-    private static final String SERVER_URL = "http://<서버주소>/results";
+    private static final String SERVER_URL = "http://주소/results";
 
     public static void fetchResults() {
         OkHttpClient client = new OkHttpClient();
