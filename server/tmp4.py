@@ -90,7 +90,7 @@ AI_URL = f"{public_url}/detect"
 print("공용 URL:", AI_URL)
 
 nest_asyncio.apply()
-uvicorn.run(app, host="0.0.0.0", port=8000, block=False)
+uvicorn.run(app, host="0.0.0.0", port=8000)
 
 """
 보안 비밀 설정(환경 변수 설정 부분 코드로 대체 가능)
