@@ -6,5 +6,7 @@ CREATE TABLE detection_results (
     detections JSON NOT NULL
 );
 
+SELECT * FROM detection_results;
+
 (DB 테이블 설정시 사용햇던 쿼리)
 (추후 필요시 수정, 추가 예정)
