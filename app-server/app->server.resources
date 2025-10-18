@@ -1,0 +1,57 @@
+// 분석 시작 버튼 안에 추가
+if (imageUri == null) return@setOnClickListener
+
+            // URI → 실제 파일로 변환
+            val file = uriToTempFile(imageUri)
+
+            val requestBody = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart(
+                    "file",
+                    file.name,
+                    file.asRequestBody("image/*".toMediaTypeOrNull())
+                )
+                .build()
+
+            val request = Request.Builder()
+                .url("http://https://eda5351146e0.ngrok-free.app/upload")
+                .post(requestBody)
+                .build()
+
+            OkHttpClient().newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    runOnUiThread {
+                        Toast.makeText(this@ImagePreviewActivity, "전송 실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    runOnUiThread {
+                        Toast.makeText(this@ImagePreviewActivity, "전송 성공", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            })
+
+// 위 코드 실행 위해 필요 함수들
+// URI → 임시파일로 변환 (안드로이드에서 가장 안전하다하여 적용)
+    private fun uriToTempFile(uri: Uri): File {
+        val inputStream: InputStream = contentResolver.openInputStream(uri)!!
+        val fileName = getFileName(uri)
+        val tempFile = File(cacheDir, fileName)
+        val out = FileOutputStream(tempFile)
+        inputStream.copyTo(out)
+        out.close()
+        inputStream.close()
+        return tempFile
+    }
+
+    // 파일명 얻기
+    private fun getFileName(uri: Uri): String {
+        var name = "temp_image"
+        val cursor = contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            if (it.moveToFirst()) name = it.getString(nameIndex)
+        }
+        return name
+    }
