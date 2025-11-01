@@ -1,0 +1,53 @@
+package com.leaf.lack.ui
+
+import android.os.Bundle
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.leaf.lack.R
+import okhttp3.*
+import java.io.IOException
+
+class HistoryActivity : AppCompatActivity() {
+    private lateinit var textView: TextView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_history)
+
+        textView = findViewById(R.id.history_text)
+        textView.text = "이전에 분석한 결과들을 불러오는 중입니다..."
+
+        // ✅ 서버의 /results API 주소 (ngrok 주소로 교체)
+        val serverUrl = "https://247a7fedc395.ngrok-free.app/results"
+
+        fetchHistoryFromServer(serverUrl)
+    }
+
+    private fun fetchHistoryFromServer(url: String) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    textView.text = "서버 연결 실패: ${e.message}"
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    runOnUiThread {
+                        textView.text = "분석 결과:\n$responseBody"
+                    }
+                } else {
+                    runOnUiThread {
+                        textView.text = "서버 응답 실패: ${response.code}"
+                    }
+                }
+            }
+        })
+    }
+}
