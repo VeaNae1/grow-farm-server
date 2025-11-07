@@ -1,0 +1,5 @@
+package com.leaf.lack.net
+
+object ApiConfig {
+    const val BASE_URL = "https://7f91e5fb4f08.ngrok-free.app"
+}
