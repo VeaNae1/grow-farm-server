@@ -1,0 +1,180 @@
+// app/src/main/java/com/leaf/lack/ui/ResultActivity.kt
+package com.leaf.lack.ui
+
+import android.os.Bundle
+import android.util.TypedValue
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
+import com.leaf.lack.R
+import com.leaf.lack.net.ApiConfig
+import okhttp3.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
+
+class ResultActivity : AppCompatActivity() {
+
+    private lateinit var tvDate: TextView
+    private lateinit var ivMain: ImageView
+    private lateinit var tvResult: TextView
+    private lateinit var tvCount: TextView
+    private lateinit var tvAcc: TextView
+    private lateinit var tvFert: TextView
+    private lateinit var tvPrev: TextView
+    private lateinit var tvSymp: TextView
+    private lateinit var llCrops: LinearLayout
+
+    private var baseUrl: String = "${ApiConfig.BASE_URL}"
+    private var postId: Int = -1
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_result)
+
+        tvDate = findViewById(R.id.tv_date)
+        ivMain = findViewById(R.id.iv_main_image)
+        tvResult = findViewById(R.id.tv_result)
+        tvCount = findViewById(R.id.tv_count)
+        tvAcc = findViewById(R.id.tv_accuracy)
+        tvFert = findViewById(R.id.tv_fertilizer)
+        tvPrev = findViewById(R.id.tv_prevention)
+        tvSymp = findViewById(R.id.tv_symptoms)
+        llCrops = findViewById(R.id.ll_crops)
+
+        baseUrl = intent.getStringExtra("base_url") ?: ""
+        postId = intent.getIntExtra("post_id", -1)
+
+        if (baseUrl.isBlank() || postId <= 0) {
+            Toast.makeText(this, "잘못된 요청입니다.", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
+        fetchReport()
+    }
+
+    private fun fetchReport() {
+        val req = Request.Builder()
+            .url("$baseUrl/report/$postId")
+            .build()
+
+        OkHttpClient().newCall(req).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    Toast.makeText(this@ResultActivity, "보고서 요청 실패: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            override fun onResponse(call: Call, resp: Response) {
+                val body = resp.body?.string()
+                if (!resp.isSuccessful || body.isNullOrBlank()) {
+                    runOnUiThread {
+                        Toast.makeText(this@ResultActivity, "보고서 응답 오류: ${resp.code}", Toast.LENGTH_LONG).show()
+                    }
+                    return
+                }
+                try {
+                    val root = JSONObject(body)
+                    val report = root.getJSONObject("report")
+                    bindReport(report)
+                } catch (t: Throwable) {
+                    runOnUiThread {
+                        Toast.makeText(this@ResultActivity, "보고서 파싱 오류: ${t.localizedMessage}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun bindReport(rep: JSONObject) {
+        val date = rep.optString("date", "-")
+        val defProb = rep.optDouble("deficiency_prob", 0.0)
+        val totalDetected = rep.optInt("total_detected", 0)
+        val totalObjects = rep.optInt("total_objects", 0)
+        val mainUrl = rep.optString("main_image_url", "")
+
+        val accuracy = rep.optDouble("accuracy",
+            rep.optJSONObject("metrics")?.optDouble("map_05", 0.0) ?: 0.0
+        )
+
+        val major = rep.optString("deficiency_type",
+            majorityLabel(rep.optJSONArray("detections") ?: JSONArray()) ?: "N"
+        )
+
+        val ferts = rep.optJSONArray("fertilizer_recommend") ?: JSONArray()
+        val prevs = rep.optJSONArray("prevention") ?: JSONArray()
+        val symps = rep.optJSONArray("symptoms")
+            ?: rep.optJSONArray("symptoms_${major}") ?: JSONArray()
+
+        val crops = rep.optJSONArray("crop_image_urls") ?: JSONArray()
+
+        runOnUiThread {
+            tvDate.text = "$date 분석결과"
+            tvResult.text = "결과: $major ${defProb.toInt()}%"
+            tvCount.text = "$totalDetected / $totalObjects"
+            tvAcc.text = "모델 정확도: ${accuracy.toInt()}%"
+
+            if (mainUrl.isNotBlank()) {
+                Glide.with(this).load(mainUrl).fitCenter().into(ivMain)
+            }
+
+            // 크롭 썸네일 영역 비우고 다시 채우기
+            llCrops.removeAllViews()
+            addCropThumbnails(crops)
+
+            tvFert.text = "비료 추천:\n" + joinLines(ferts).ifBlank { "-" }
+            tvPrev.text = "예방 방법:\n" + joinLines(prevs).ifBlank { "-" }
+            tvSymp.text = "$major 결핍 증상:\n" + joinLines(symps).ifBlank { "-" }
+        }
+    }
+
+    private fun addCropThumbnails(urls: JSONArray) {
+        // 썸네일 기본 크기: 높이 96dp, 폭 wrap_content, 비율유지
+        val heightPx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 96f, resources.displayMetrics
+        ).toInt()
+
+        val marginPx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, 6f, resources.displayMetrics
+        ).toInt()
+
+        for (i in 0 until urls.length()) {
+            val url = urls.optString(i, "")
+            if (url.isBlank()) continue
+
+            val iv = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    heightPx
+                ).also { lp ->
+                    (lp as LinearLayout.LayoutParams).rightMargin = marginPx
+                }
+                adjustViewBounds = true
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+
+            Glide.with(this).load(url).fitCenter().into(iv)
+            llCrops.addView(iv)
+        }
+    }
+
+    private fun joinLines(arr: JSONArray): String =
+        (0 until arr.length()).joinToString("\n") { "${it + 1}. ${arr.getString(it)}" }
+
+    private fun majorityLabel(dets: JSONArray): String? {
+        val counts = HashMap<String, Int>()
+        for (i in 0 until dets.length()) {
+            val o = dets.getJSONObject(i)
+            val label = o.optString("label", "").lowercase()
+            if (label.isNotBlank() && label != "healthy") {
+                counts[label] = (counts[label] ?: 0) + 1
+            }
+        }
+        return counts.maxByOrNull { it.value }?.key?.uppercase()
+    }
+}
