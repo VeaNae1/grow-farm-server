@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:paddingTop="70dp"
+            android:id="@+id/tv_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="날짜"
+            android:textSize="20sp" />
+
+        <ImageView
+            android:id="@+id/iv_main_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="centerCrop"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/tv_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="결과: N 66%"
+            android:textSize="18sp"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/tv_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="6/9"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tv_accuracy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="모델 정확도: 90%"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="* 정확도 70% 이하일 경우 재진단이 필요합니다."
+            android:textSize="14sp"
+            android:layout_marginTop="4dp" />
+
+        <!-- 🔽 크롭 이미지 나열 (가로 스크롤) -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="크롭 이미지"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="always"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/ll_crops"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/tv_fertilizer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="비료 추천:"
+            android:textSize="16sp"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/tv_prevention"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="예방법:"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/tv_symptoms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="증상 설명:"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp" />
+    </LinearLayout>
+</ScrollView>
